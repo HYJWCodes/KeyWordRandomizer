@@ -28,5 +28,12 @@ android.archs = armeabi-v7a, arm64-v8a
 android.use_androidx = 1
 android.enable_androidx_workaround = 1
 
+# Buildozer spec snippet
+android.api = 33
+android.build_tools_version = 33.0.2
+android.sdk = 33
+android.ndk = 25b
+
+
 # Copy fonts and csvs into .apk
 android.add_src = true
