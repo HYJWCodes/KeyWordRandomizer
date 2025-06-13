@@ -29,15 +29,12 @@ jobs:
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Accept Android SDK licenses manually
+    - name: Initialize Buildozer (preserve your spec)
       run: |
-        mkdir -p ~/.android
-        echo '8933bad161af4178b1185d1a37fbf41ea5269c55' > ~/.android/repositories.cfg
-        yes | sdkmanager --licenses || true
+        buildozer init || true
 
     - name: Build APK with Buildozer
       run: |
-        buildozer android update
         buildozer android debug
 
     - name: Upload APK
