@@ -34,20 +34,20 @@ jobs:
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
 
-        # Download SDK tools
+        # Download and unzip
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip -q commandlinetools-linux-8512546_latest.zip -d cmdline-tools
+        unzip -q commandlinetools-linux-8512546_latest.zip
 
-        # Place into correct Buildozer-expected path
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        mv cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        # Move inner cmdline-tools to 'latest'
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
+        mv cmdline-tools $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
-        # 👇 Patch Buildozer to find sdkmanager in old 'tools/bin' path
+        # Create legacy tools/bin path for Buildozer compatibility
         mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
         ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
                $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
 
-        # Accept licenses and install required SDK packages
+        # Install the required SDKs
         yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
 
@@ -59,4 +59,3 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: jangre-random-machine-apk
-        path: bin/*.apk
