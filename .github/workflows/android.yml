@@ -23,7 +23,6 @@ jobs:
         sudo apt update
         sudo apt install -y zip unzip openjdk-17-jdk python3-pip git wget \
           autoconf automake libtool gettext libltdl-dev
-
         pip install --upgrade pip
         pip install buildozer cython
 
@@ -32,15 +31,13 @@ jobs:
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
 
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip -q commandlinetools-linux-8512546_latest.zip -d cmdline-tools
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        mv cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        unzip -q commandlinetools-linux-8512546_latest.zip -d $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/tmp
+        mv $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/tmp/cmdline-tools \
+           $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
-        # Create symlink to satisfy old Buildozer path expectations
-        ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest $HOME/.buildozer/android/platform/android-sdk/tools
-
-        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
+        yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
 
     - name: Initialize buildozer.spec if not present
