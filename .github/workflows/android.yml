@@ -35,9 +35,10 @@ jobs:
         touch ~/.android/repositories.cfg
 
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip -q commandlinetools-linux-8512546_latest.zip -d cmdline-tools
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-        mv cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        unzip -q commandlinetools-linux-8512546_latest.zip
+
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
+        mv cmdline-tools $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
         yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2"
