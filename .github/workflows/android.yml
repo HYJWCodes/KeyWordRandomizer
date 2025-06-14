@@ -31,14 +31,16 @@ jobs:
 
     - name: Manually install Android SDK Build-Tools 33.0.2
       run: |
-        yes | sudo mkdir -p ~/.android && touch ~/.android/repositories.cfg
+        mkdir -p ~/.android
+        touch ~/.android/repositories.cfg
+
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
         unzip -q commandlinetools-linux-8512546_latest.zip -d cmdline-tools
         mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
         mv cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
 
         yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "tools"
+          "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
     - name: Build APK with Buildozer
       run: |
