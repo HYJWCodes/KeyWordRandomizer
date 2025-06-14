@@ -13,7 +13,7 @@ jobs:
     - name: Checkout repo
       uses: actions/checkout@v3
 
-    - name: Set up Python 3.10
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
@@ -22,30 +22,41 @@ jobs:
       run: |
         sudo apt update
         sudo apt install -y zip unzip openjdk-17-jdk python3-pip git wget \
-          autoconf automake libtool gettext libltdl-dev
+          autoconf automake libtool pkg-config libffi-dev libssl-dev \
+          libltdl-dev libncurses-dev zlib1g zlib1g-dev \
+          ccache libpng-dev libjpeg-dev
+
         pip install --upgrade pip
         pip install buildozer cython
 
-    - name: Download and configure Android SDK
+    - name: Manually install Android SDK and patch sdkmanager path
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
 
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
+        # Download SDK tools
         wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip -q commandlinetools-linux-8512546_latest.zip -d $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/tmp
-        mv $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/tmp/cmdline-tools \
-           $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        unzip -q commandlinetools-linux-8512546_latest.zip -d cmdline-tools
 
-        yes | $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
+        # Place into correct Buildozer-expected path
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+        mv cmdline-tools/* $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+
+        # 👇 Patch Buildozer to find sdkmanager in old 'tools/bin' path
+        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
+        ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
+               $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+
+        # Accept licenses and install required SDK packages
+        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
           "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
-
-    - name: Initialize buildozer.spec if not present
-      run: |
-        if [ ! -f buildozer.spec ]; then
-          buildozer init
-        fi
 
     - name: Build APK
       run: |
         buildozer android debug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: jangre-random-machine-apk
+        path: bin/*.apk
