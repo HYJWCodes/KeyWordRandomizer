@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Building a Signed AAB for Google Play
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout code
       uses: actions/checkout@v3
 
     - name: Set up Python
@@ -18,43 +18,38 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Install system dependencies
+    - name: Install dependencies
       run: |
         sudo apt update
         sudo apt install -y zip unzip openjdk-17-jdk python3-pip git wget \
-          autoconf automake libtool pkg-config libffi-dev libssl-dev \
-          libltdl-dev libncurses-dev zlib1g zlib1g-dev \
-          ccache libpng-dev libjpeg-dev
-
+          autoconf automake libtool libltdl-dev pkg-config
         pip install --upgrade pip
-        pip install cython==0.29.36
-        pip install https://github.com/kivy/buildozer/archive/master.zip
+        pip install buildozer cython==0.29.36
 
-    - name: Install Android SDK and patch sdkmanager
+    - name: Decode keystore from base64
       run: |
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
+        echo "$KEYSTORE_B64" | base64 -d > release-key.jks
+      env:
+        KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
 
-        wget https://dl.google.com/android/repository/commandlinetools-linux-8512546_latest.zip
-        unzip -q commandlinetools-linux-8512546_latest.zip
-
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/cmdline-tools
-        mv cmdline-tools $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest
-
-        # Create legacy path Buildozer expects
-        mkdir -p $HOME/.buildozer/android/platform/android-sdk/tools/bin
-        ln -s $HOME/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager \
-               $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
-
-        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/.buildozer/android/platform/android-sdk \
-          "platform-tools" "platforms;android-33" "build-tools;33.0.2" "ndk;25.1.8937393"
-
-    - name: Build APK
+    - name: Create buildozer.spec overrides for signing
       run: |
-        buildozer android debug
+        echo "[app]" >> local.properties
+        echo "android.keystore = release-key.jks" >> local.properties
+        echo "android.keyalias = $KEY_ALIAS" >> local.properties
+        echo "android.keystore_passwd = $KEYSTORE_PASSWORD" >> local.properties
+        echo "android.keyalias_passwd = $KEY_ALIAS_PASSWORD" >> local.properties
+      env:
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_ALIAS_PASSWORD: ${{ secrets.KEY_ALIAS_PASSWORD }}
 
-    - name: Upload APK
+    - name: Build signed AAB
+      run: |
+        buildozer android release aab
+
+    - name: Upload AAB as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: jangre-random-machine-apk
-        path: bin/*.apk
+        name: signed-aab
+        path: bin/*.aab
